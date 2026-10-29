@@ -16,12 +16,25 @@ class ModelWrapper():
       )
     ])
 
-  def batched_predict(self, X, target_class, batch_size=32):
+  def predict_class(self, image):
+    """
+    image: np.array of shape (H, W, 3)
+    """
+
+    image_tensor = self.image_tf(image).unsqueeze(0).to(self.device)
+    with torch.no_grad():
+      logits = self.model(image_tensor)
+      predicted_class = torch.argmax(logits, dim=1).item()
+    return predicted_class
+
+  def predict_target_class_proba(self, X, target_class, batch_size=32):
     """
     runs inference in batches
+    returns the probability assigned by the model to the target_class
+    over all examples
 
     batch_size   : size of a single batch (default 32)
-    X            : np.array of shape [N, H, W, 3]
+    X            : np.array of shape (N, H, W, 3)
     target_class : the class for which we extract probabilities
 
     note: N is length of dataset
@@ -41,11 +54,19 @@ class LimeImageExplainer():
   def __init__(self, model, device):
     self.model_wrapper = ModelWrapper(model, device)
 
-  def explain(self, img):
+  def generate_neighborhood(self):
+    pass 
+
+  def train_explainer_model(self):
+    pass
+
+  def explain(self, image):
     """
-    img_np: np.array of shape (H, W, 3)
-            with float values in [0, 1]
+    image: np.array of shape (H, W, 3)
+           with float values in [0, 1]
     """
 
-    segments = slic(img, compactness=100, n_segments=400)
-    
+    segments = slic(image, compactness=100, n_segments=400)
+
+    # we want to explain the top class predicted for this image
+    predicted_class = self.model_wrapper.predict_class(image)
