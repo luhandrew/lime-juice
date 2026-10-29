@@ -127,16 +127,16 @@ class ImageExplanation:
 
     fig, axes = plt.subplots(1, 4, figsize=figsize)
 
-    # - original image -
+    # - Original image -
     axes[0].set_title(f"Original image\nLabel: {self.target_label} (Class {self.target_class}: {self.predicted_proba:.2%})")
     axes[0].imshow(self.image)
 
-    # - regions -
+    # - Regions -
     axes[1].set_title(f"Regions")
     partitioned_view = mark_boundaries(self.image, self.segments, color=(1, 1, 0), mode="thick")
     axes[1].imshow(partitioned_view)
 
-    # - heatmap of weights -
+    # - Heatmap of weights -
     axes[2].set_title(f"Importance of each region\nModel Fidelity R2 = {self.score:.2f}")
     heat_map = np.zeros(self.segments.shape, dtype=np.float32)
     for seg_id, weight in enumerate(self.coefficients):
@@ -148,9 +148,8 @@ class ImageExplanation:
     boundary_overlay = np.zeros((*boundaries.shape, 4))
     boundary_overlay[boundaries] = (0, 0, 0, 0.6)
     axes[2].imshow(boundary_overlay)
-    # plt.colorbar(im, ax=axes[2], fraction=0.046, pad=0.04)
 
-    # - most important regions -
+    # - Most important regions -
     axes[3].set_title(f"Top {num_features} most important regions")
     masked_img, _ = self.get_image_and_mask(num_features=num_features)
     axes[3].imshow(masked_img)
@@ -222,14 +221,14 @@ class LimeImageExplainer:
       kernel_width: kernel parameter
     """
 
-    # added support for different random seeds
+    # Added support for different random seeds
     if random_state is not None:
       np.random.seed(random_state)
 
     kw = kernel_width or self.kernel_width
     image = self.load_and_preprocess_image(image_input)
 
-    # segment the image into regions
+    # Segment the image into regions
     segments, unique_segments = self.segment_image(
       image,
       n_segments=n_segments,
@@ -238,7 +237,7 @@ class LimeImageExplainer:
     )
     n_features = len(unique_segments)
 
-    # compute the initial probability for the predicted class
+    # Compute the initial probability for the predicted class
     initial_probs = self.model_wrapper.predict_proba(np.expand_dims(image, axis=0))[0]
     target_class = int(np.argmax(initial_probs))
     initial_target_proba = float(initial_probs[target_class])
@@ -246,12 +245,11 @@ class LimeImageExplainer:
     wrapper_class_names = self.model_wrapper.class_names
     target_label = wrapper_class_names[target_class]
 
-    # compute binary perturbation masks
+    # Compute binary perturbation masks
     perturbation_masks = np.random.binomial(1, 0.5, size=(num_samples, n_features)).astype(np.float32)
     perturbation_masks[0, :] = 1.0  # original image instance
 
-    # generate the perturbed images
-    # and predict target class probabilities
+    # Generate the perturbed images and predict target class probabilities
     target_probabilities = np.zeros(num_samples, dtype=np.float32)
     mask_color_arr = np.array(mask_color, dtype=np.float32).reshape(1, 1, 1, 3)
 
@@ -263,12 +261,12 @@ class LimeImageExplainer:
       batch_probs = self.model_wrapper.predict_proba(batch_perturbed_imgs)
       target_probabilities[i : i + batch_size] = batch_probs[:, target_class]
 
-    # compute the distances + weights
+    # Compute the distances + weights
     original_vector = np.ones(n_features, dtype=np.float32)
     distances = np.linalg.norm(perturbation_masks - original_vector, axis=1) / np.sqrt(n_features)
     weights = np.exp(-(distances ** 2) / (kw ** 2))
 
-    # fit the linear model
+    # Fit the linear model
     surrogate_model = Ridge(alpha=1.0, fit_intercept=True)
     surrogate_model.fit(perturbation_masks, target_probabilities, sample_weight=weights)
 
