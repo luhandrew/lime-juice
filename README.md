@@ -1,6 +1,6 @@
 <img src="./lime-img.png"></img>
 
-## LIME
+## Local Interpretable Model-Agnostic Explanations (LIME)
 
 <p align="center">
   <i>When life gives you LIMEs,<br>
