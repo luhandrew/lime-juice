@@ -1,6 +1,6 @@
 <img src="./lime-img.png"></img>
 
-## LIME-juice
+## LIME
 
 <p align="center">
   <i>When life gives you LIMEs,<br>
